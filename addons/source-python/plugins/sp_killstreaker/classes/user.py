@@ -61,7 +61,6 @@ class UserManager(dict):
         return self[userid_from_index(index)]
 
     def announce_killstreak(self, user, killstreak):
-
         # Get target indexes
         indexes = set()
 
@@ -133,27 +132,8 @@ class BaseUser:
     def count_death(self, game_event):
         raise NotImplementedError
 
-
-class BotUser(BaseUser):
-    def __init__(self, user_manager, player):
-        super().__init__(user_manager, player)
-
-    @property
-    def isbot(self):
-        return True
-
-    @property
-    def killstreak(self):
-        return 0
-
-    def count_damage(self, game_event):
-        pass
-
-    def count_kill(self, game_event):
-        pass
-
-    def count_death(self, game_event):
-        pass
+    def reset_killstreaks(self):
+        raise NotImplementedError
 
 
 class User(BaseUser):
@@ -334,16 +314,27 @@ class User(BaseUser):
 
         self._delay_queue_clearing()
 
-    def count_death(self, game_event):
+    def reset_killstreaks(self):
         self._multikill = 0
         self._killstreak_heads = 0
         self._killstreak = 0
         self._current_damage = 0
 
+    def count_death(self, game_event):
+        self.reset_killstreaks()
+
         attackerid = game_event.get_int('attacker')
         if attackerid == 0 or attackerid == self.player.userid:
             self._add_to_queue("SPECIAL_SUICIDE")
             self._delay_queue_clearing()
+
+
+class BotUser(User):
+    def _display_text(self):
+        pass
+
+    def count_damage(self, game_event):
+        pass
 
 
 def update_from_cvars():

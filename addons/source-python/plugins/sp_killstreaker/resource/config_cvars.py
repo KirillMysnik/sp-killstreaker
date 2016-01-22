@@ -51,6 +51,12 @@ with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
         flags=ConVarFlags.NOTIFY,
         min_value=0.0,
     )
+    cvar_killstreak_reset_every_round = config_manager.cvar(
+        name="killstreak_reset_every_round",
+        default=1,
+        description=strings_config['killstreak_reset_every_round'],
+        min_value=0.0,
+    )
     cvar_killstreak_scheme = config_manager.cvar(
         name="killstreak_scheme",
         default="default",

@@ -20,6 +20,7 @@ from .classes.user import user_manager
 from .namespaces import status
 
 from .resource.config_cvars import cvar_killstreak_scheme
+from .resource.config_cvars import cvar_killstreak_reset_every_round
 
 
 DOWNLOADLIST = CFG_PATH / info.basename / "downloadlist.txt"
@@ -90,6 +91,10 @@ def on_player_death(game_event):
 @Event('round_start')
 def on_round_start(game_event):
     status.firstblood_triggered = False
+
+    if cvar_killstreak_reset_every_round.get_bool():
+        for user in user_manager.values():
+            user.reset_killstreaks()
 
 
 @Event('server_cvar')
