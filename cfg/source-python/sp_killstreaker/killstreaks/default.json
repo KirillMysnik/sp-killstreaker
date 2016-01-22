@@ -1,0 +1,23 @@
+{
+    "text": "default_title",
+    "strings": "default",
+    "killstreaks": {
+        "SPECIAL_HEADSHOT": {
+            "text": "special_headshot",
+            "priority": 1,
+            "recipients": 3
+        },
+        "SPECIAL_SUICIDE": {
+            "text": "special_suicide",
+            "text_on_killstreak": "special_suicide_extended",
+            "priority": 1,
+            "recipients": 7
+        },
+        "SPECIAL_TEAMKILL": {
+            "text": "special_teamkill",
+            "text_on_killstreak": "special_teamkill_extended",
+            "priority": 2,
+            "recipients": 15
+        }
+    }
+}

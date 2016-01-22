@@ -1,0 +1,3 @@
+sound/arcjail/hitsound.wav
+materials/overlays/sp_killstreaker/hitmarker.vtf
+materials/overlays/sp_killstreaker/hitmarker.vmt
