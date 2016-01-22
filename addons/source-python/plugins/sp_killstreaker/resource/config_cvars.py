@@ -7,20 +7,14 @@ from .strings import strings_config
 
 
 with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
-    config_manager.section("Logging")
-    cvar_logging_level = config_manager.cvar(
-        name="logging_level",
-        default=4,
-        description=strings_config['logging_level'],
-    )
-    cvar_damage_visible_timeout = config_manager.cvar(
-        name="damage_visible_timeout",
-        default=2.0,
-        description=strings_config['damage_visible_timeout'],
+    config_manager.section(strings_config['section_hitsound'])
+    cvar_hitsound = config_manager.cvar(
+        name="hitsound",
+        default="arcjail/hitsound.wav",
+        description=strings_config['hitsound'],
         flags=ConVarFlags.NOTIFY,
-        min_value=0.0,
-        max_value=10.0,
     )
+    config_manager.section(strings_config['section_hitmarker'])
     cvar_hitmarker = config_manager.cvar(
         name="hitmarker",
         default="overlays/sp_killstreaker/hitmarker",
@@ -33,10 +27,34 @@ with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
         description=strings_config['hitmarker_visible_timeout'],
         flags=ConVarFlags.NOTIFY,
     )
-    cvar_hitsound = config_manager.cvar(
-        name="hitsound",
-        default="arcjail/hitsound.wav",
-        description=strings_config['hitsound'],
+    config_manager.section(strings_config['section_showdamage'])
+    cvar_showdamage_enabled = config_manager.cvar(
+        name="showdamage_enabled",
+        default=1,
+        description=strings_config['showdamage_enabled'],
+        flags=ConVarFlags.NOTIFY,
+        min_value=0.0,
+    )
+    cvar_damage_visible_timeout = config_manager.cvar(
+        name="damage_visible_timeout",
+        default=2.0,
+        description=strings_config['damage_visible_timeout'],
+        flags=ConVarFlags.NOTIFY,
+        min_value=0.0,
+        max_value=10.0,
+    )
+    config_manager.section(strings_config['section_killstreaks'])
+    cvar_killstreak_enabled = config_manager.cvar(
+        name="killstreak_enabled",
+        default=1,
+        description=strings_config['killstreak_enabled'],
+        flags=ConVarFlags.NOTIFY,
+        min_value=0.0,
+    )
+    cvar_killstreak_scheme = config_manager.cvar(
+        name="killstreak_scheme",
+        default="default",
+        description=strings_config['killstreak_scheme'],
         flags=ConVarFlags.NOTIFY,
     )
     cvar_killstreak_visible_timeout = config_manager.cvar(
@@ -46,16 +64,11 @@ with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
         flags=ConVarFlags.NOTIFY,
         min_value=0,
     )
+    config_manager.section(strings_config['section_advanced'])
     cvar_queue_timeout = config_manager.cvar(
         name="queue_timeout",
         default=0.15,
         description=strings_config['queue_timeout'],
         flags=ConVarFlags.NOTIFY,
         min_value=0,
-    )
-    cvar_killstreak_scheme = config_manager.cvar(
-        name="killstreak_scheme",
-        default="",
-        description=strings_config['killstreak_scheme'],
-        flags=ConVarFlags.NOTIFY,
     )

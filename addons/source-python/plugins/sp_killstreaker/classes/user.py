@@ -3,28 +3,32 @@ from engines.sound import Sound
 from listeners.tick import Delay
 from messages import HudMsg
 from messages import TextMsg
-from players import Player
+from players.entity import Player
 from players.helpers import userid_from_index
 from players.helpers import index_from_userid
 
 from .ks_database import ks_database
 from .ks_database import KillstreakTarget
 
+from ..namespaces import status
+
 from ..resource.config_cvars import cvar_damage_visible_timeout
 from ..resource.config_cvars import cvar_hitmarker
 from ..resource.config_cvars import cvar_hitmarker_visible_timeout
 from ..resource.config_cvars import cvar_hitsound
+from ..resource.config_cvars import cvar_killstreak_enabled
 from ..resource.config_cvars import cvar_killstreak_visible_timeout
 from ..resource.config_cvars import cvar_queue_timeout
+from ..resource.config_cvars import cvar_showdamage_enabled
 
 from ..resource.strings import strings_popups
 
 
-KS_MSG_COLOR = Color(124, 173, 255)
+KS_MSG_COLOR = Color(196, 0, 0)
 KS_MSG_X = -1
-KS_MSG_Y = 0.05
+KS_MSG_Y = 0.2
 KS_MSG_EFFECT = 2
-KS_MSG_FADEIN = 0.05
+KS_MSG_FADEIN = 0.01
 KS_MSG_FADEOUT = 0
 KS_MSG_HOLDTIME = 1.5
 KS_MSG_FXTIME = 0
@@ -34,9 +38,11 @@ SPECIAL_WEAPONS = ['knife', 'hegrenade']
 
 
 damage_text_visible_timeout = 2
+killstreak_enabled = True
 killstreak_text_visible_timeout = 2
 marker_visible_timeout = 0.2
 queue_timeout = 0.15
+showdamage_enabled = True
 
 hit_sound = None
 marker_material = None
@@ -85,7 +91,7 @@ class UserManager(dict):
             hud_msg = HudMsg(
                 strings_popups[is_on_killstreak_string].tokenize(
                     name=user.player.name,
-                    is_on_killstreak=killstreak.text_on_killstreak,
+                    on_killstreak_text=killstreak.text_on_killstreak,
                     kills=user.killstreak,
                 ),
                 color1=KS_MSG_COLOR,
@@ -121,7 +127,9 @@ class User:
         self._clear_queue_delay = None
 
     def _display_text(self):
-        if self._current_damage > 0 and self._current_killstreak_text is None:
+        if (showdamage_enabled and
+                self._current_damage > 0 and
+                self._current_killstreak_text is None):
 
             # Display damage only
             ts = strings_popups['showdamage hp'].tokenize(
@@ -129,14 +137,17 @@ class User:
             )
 
         elif (self._current_damage <= 0 and
-              self._current_killstreak_text is not None):
+              self._current_killstreak_text is not None and
+              killstreak_enabled):
 
             # Display killstreak only
             ts = strings_popups['showdamage ks'].tokenize(
                 killstreak_text=self._current_killstreak_text
             )
 
-        elif (self._current_damage > 0 and
+        elif (showdamage_enabled and
+              self._current_damage > 0 and
+              killstreak_enabled and
               self._current_killstreak_text is not None):
 
             # Display both damage and killstreak
@@ -169,6 +180,8 @@ class User:
             return
 
         self._queue.add(killstreak)
+
+    def _delay_queue_clearing(self):
         if (self._clear_queue_delay is not None and
                 self._clear_queue_delay.running):
 
@@ -177,29 +190,41 @@ class User:
         self._clear_queue_delay = Delay(queue_timeout, self._clear_queue)
 
     def _clear_queue(self):
+        if (self._reset_damage_text_delay is not None and
+                self._reset_damage_text_delay.running):
+
+            self._reset_damage_text_delay.cancel()
+
+        if damage_text_visible_timeout > 0:
+            self._reset_damage_text_delay = Delay(
+                damage_text_visible_timeout, self._reset_damage_text)
+
         queue = sorted(self._queue, key=lambda ks: ks.priority, reverse=True)
         self._queue.clear()
         self._multikill = 0
 
-        if not queue:
-            return
+        if queue:
+            killstreak = queue[0]
 
-        killstreak = queue[0]
-        if (killstreak.text is not None and
-                killstreak.targets & KillstreakTarget.ATTACKER):
+            if (killstreak.text is not None and
+                    killstreak.targets & KillstreakTarget.ATTACKER):
 
-            self._current_killstreak_text = killstreak.text
-            self._display_text()
+                self._current_killstreak_text = killstreak.text
 
-            if (self._reset_killstreak_text_delay is not None and
-                    self._reset_killstreak_text_delay.running):
+                if (self._reset_killstreak_text_delay is not None and
+                        self._reset_killstreak_text_delay.running):
 
-                self._reset_killstreak_text_delay.cancel()
+                    self._reset_killstreak_text_delay.cancel()
 
-            self._reset_killstreak_text_delay = Delay(
-                killstreak_text_visible_timeout, self._reset_killstreak_text)
+                if killstreak_text_visible_timeout > 0:
+                    self._reset_killstreak_text_delay = Delay(
+                        killstreak_text_visible_timeout,
+                        self._reset_killstreak_text
+                    )
 
-        user_manager.announce_killstreak(self, killstreak)
+            user_manager.announce_killstreak(self, killstreak)
+
+        self._display_text()
 
     @property
     def killstreak(self):
@@ -208,35 +233,29 @@ class User:
     def count_damage(self, game_event):
         self._current_damage += max(0, game_event.get_int('dmg_health'))
 
-        # Display damage amount
-        self._display_text()
+        # Delayed queue clearing
+        self._delay_queue_clearing()
 
-        # Play hit sound
         if hit_sound is not None:
+
+            # Play hit sound
             hit_sound.play(self.player.index)
 
-        # Show hit marker
-        if marker_material is not None:
+        if marker_material is not None and marker_visible_timeout > 0:
+
+            # Show hit marker
             self.player.client_command(
                 'r_screenoverlay {}'.format(marker_material))
 
-        # Cancel delays if any
-        if (self._reset_damage_text_delay is not None and
-                self._reset_damage_text_delay.running):
+            # Cancel hit marker delay (if any)
+            if (self._reset_marker_delay is not None and
+                    self._reset_marker_delay.running):
 
-            self._reset_damage_text_delay.cancel()
+                self._reset_marker_delay.cancel()
 
-        if (self._reset_marker_delay is not None and
-                self._reset_marker_delay.running):
-
-            self._reset_marker_delay.cancel()
-
-        # Relaunch delays
-        self._reset_damage_text_delay = Delay(
-            damage_text_visible_timeout, self._reset_damage_text)
-
-        self._reset_marker_delay = Delay(
-            marker_visible_timeout, self._reset_marker)
+            # Relaunch delay
+            self._reset_marker_delay = Delay(
+                marker_visible_timeout, self._reset_marker)
 
     def count_kill(self, game_event):
         self._killstreak += 1
@@ -247,11 +266,9 @@ class User:
         if game_event.get_bool('headshot'):
             self._killstreak_heads += 1
             self._add_to_queue("SPECIAL_HEADSHOT")
+            self._add_to_queue("HEADSHOTS_X{}".format(self._killstreak_heads))
 
         victimid = game_event.get_int('userid')
-        if victimid == self.player.userid:
-            return
-
         victim = Player(index_from_userid(victimid))
 
         if victim.team == self.player.team:
@@ -260,6 +277,12 @@ class User:
         weapon = game_event.get_string('weapon')
         if weapon in SPECIAL_WEAPONS:
             self._add_to_queue("SPECIAL_{}".format(weapon.upper()))
+
+        if not status.firstblood_triggered:
+            self._add_to_queue("SPECIAL_FIRSTBLOOD")
+            status.firstblood_triggered = True
+
+        self._delay_queue_clearing()
 
     def count_death(self, game_event):
         self._multikill = 0
@@ -270,6 +293,7 @@ class User:
         attackerid = game_event.get_int('attacker')
         if attackerid == 0 or attackerid == self.player.userid:
             self._add_to_queue("SPECIAL_SUICIDE")
+            self._delay_queue_clearing()
 
 
 def update_from_cvars():
@@ -302,4 +326,13 @@ def update_from_cvars():
     # Update from spk_queue_timeout
     global queue_timeout
     queue_timeout = cvar_queue_timeout.get_float()
+
+    # Update from spk_showdamage_enabled
+    global showdamage_enabled
+    showdamage_enabled = cvar_showdamage_enabled.get_bool()
+
+    # Update from spk_killstreak_enabled
+    global killstreak_enabled
+    killstreak_enabled = cvar_killstreak_enabled.get_bool()
+
 
