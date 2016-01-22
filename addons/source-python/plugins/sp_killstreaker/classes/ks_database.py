@@ -25,6 +25,9 @@ class Killstreak:
     show_kills = False
     sound = None
 
+    def __init__(self, id_):
+        self.id = id_
+
 
 class KillstreakDatabase(dict):
     def __init__(self):
@@ -52,7 +55,7 @@ class KillstreakDatabase(dict):
         self.text = self._strings[json['text']]
 
         for killstreak_id, killstreak_json in json['killstreaks'].items():
-            self[killstreak_id] = killstreak = Killstreak()
+            self[killstreak_id] = killstreak = Killstreak(killstreak_id)
 
             killstreak.priority = killstreak_json.get('priority', 0)
 

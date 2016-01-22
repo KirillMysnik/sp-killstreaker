@@ -5,6 +5,7 @@ from events import Event
 from filters.players import PlayerIter
 from listeners import OnClientActive
 from listeners import OnClientDisconnect
+from listeners import OnLevelInit
 from paths import CFG_PATH
 from players.entity import Player
 from players.helpers import userid_from_index
@@ -134,7 +135,11 @@ def listener_on_client_active(index):
 
 @OnClientDisconnect
 def listener_on_client_disconnect(index):
-    userid = userid_from_index(index)
-    user = user_manager.get(userid)
+    user = user_manager.get(userid_from_index(index))
     if user is not None:
         user_manager.delete(user)
+
+
+@OnLevelInit
+def listener_on_level_init(map_name):
+    user_manager.clear()

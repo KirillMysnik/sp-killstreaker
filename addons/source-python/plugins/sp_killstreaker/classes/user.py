@@ -50,7 +50,8 @@ marker_material = None
 
 class UserManager(dict):
     def create(self, player):
-        self[player.userid] = User(self, player)
+        base_class = BotUser if player.is_fake_client() else User
+        self[player.userid] = base_class(self, player)
         return self[player.userid]
 
     def delete(self, user):
@@ -66,16 +67,17 @@ class UserManager(dict):
 
         if killstreak.targets & KillstreakTarget.TEAMMATES:
             for user_ in self.values():
-                if user_.player.team == user.player.team:
+                if user_.player.team == user.player.team and not user_.isbot:
                     indexes.add(user_.player.index)
 
         if killstreak.targets & KillstreakTarget.ENEMIES:
             for user_ in self.values():
-                if user_.player.team != user.player.team:
+                if user_.player.team != user.player.team and not user_.isbot:
                     indexes.add(user_.player.index)
 
         if killstreak.targets & KillstreakTarget.ATTACKER:
-            indexes.add(user.player.index)
+            if not user.isbot:
+                indexes.add(user.player.index)
 
         # Play sound
         if killstreak.sound is not None:
@@ -109,10 +111,54 @@ class UserManager(dict):
 user_manager = UserManager()
 
 
-class User:
+class BaseUser:
     def __init__(self, user_manager, player):
         self._user_manager = user_manager
         self.player = player
+
+    @property
+    def isbot(self):
+        raise NotImplementedError
+
+    @property
+    def killstreak(self):
+        raise NotImplementedError
+
+    def count_damage(self, game_event):
+        raise NotImplementedError
+
+    def count_kill(self, game_event):
+        raise NotImplementedError
+
+    def count_death(self, game_event):
+        raise NotImplementedError
+
+
+class BotUser(BaseUser):
+    def __init__(self, user_manager, player):
+        super().__init__(user_manager, player)
+
+    @property
+    def isbot(self):
+        return True
+
+    @property
+    def killstreak(self):
+        return 0
+
+    def count_damage(self, game_event):
+        pass
+
+    def count_kill(self, game_event):
+        pass
+
+    def count_death(self, game_event):
+        pass
+
+
+class User(BaseUser):
+    def __init__(self, user_manager, player):
+        super().__init__(user_manager, player)
 
         self._queue = set()
         self._current_damage = 0
@@ -225,6 +271,10 @@ class User:
             user_manager.announce_killstreak(self, killstreak)
 
         self._display_text()
+
+    @property
+    def isbot(self):
+        return False
 
     @property
     def killstreak(self):
