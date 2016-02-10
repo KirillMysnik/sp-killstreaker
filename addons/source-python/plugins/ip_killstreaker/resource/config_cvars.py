@@ -6,7 +6,7 @@ from ..info import info
 from .strings import strings_config
 
 
-with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
+with ConfigManager(info.basename, cvar_prefix='ipk_') as config_manager:
     config_manager.section(strings_config['section_hitsound'])
     cvar_hitsound = config_manager.cvar(
         name="hitsound",
@@ -17,7 +17,7 @@ with ConfigManager(info.basename, cvar_prefix='spk_') as config_manager:
     config_manager.section(strings_config['section_hitmarker'])
     cvar_hitmarker = config_manager.cvar(
         name="hitmarker",
-        default="overlays/sp_killstreaker/hitmarker",
+        default="overlays/ip_killstreaker/hitmarker",
         description=strings_config['hitmarker'],
         flags=ConVarFlags.NOTIFY,
     )

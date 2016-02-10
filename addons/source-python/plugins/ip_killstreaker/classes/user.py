@@ -163,8 +163,7 @@ class User(BaseUser):
             )
 
         elif (self._current_damage <= 0 and
-              self._current_killstreak_text is not None and
-              killstreak_enabled):
+              self._current_killstreak_text is not None):
 
             # Display killstreak only
             ts = strings_popups['showdamage ks'].tokenize(
@@ -173,7 +172,6 @@ class User(BaseUser):
 
         elif (showdamage_enabled and
               self._current_damage > 0 and
-              killstreak_enabled and
               self._current_killstreak_text is not None):
 
             # Display both damage and killstreak
@@ -201,6 +199,9 @@ class User(BaseUser):
         self.player.client_command('r_screenoverlay off')
 
     def _add_to_queue(self, killstreak_id):
+        if not killstreak_enabled:
+            return
+
         killstreak = ks_database.get(killstreak_id)
         if killstreak is None:
             return
@@ -339,7 +340,7 @@ class BotUser(User):
 
 def update_from_cvars():
 
-    # Update from spk_hitsound
+    # Update from ipk_hitsound
     global hit_sound
     hit_sound_path = cvar_hitsound.get_string()
     if hit_sound_path == "":
@@ -347,33 +348,31 @@ def update_from_cvars():
     else:
         hit_sound = Sound(hit_sound_path)
 
-    # Update from spk_hitmarker
+    # Update from ipk_hitmarker
     global marker_material
     marker_material = cvar_hitmarker.get_string() or None
 
-    # Update from spk_hitmarker_visible_timeout
+    # Update from ipk_hitmarker_visible_timeout
     global marker_visible_timeout
     marker_visible_timeout = cvar_hitmarker_visible_timeout.get_float()
 
-    # Update from spk_damage_visible_timeout
+    # Update from ipk_damage_visible_timeout
     global damage_text_visible_timeout
     damage_text_visible_timeout = cvar_damage_visible_timeout.get_float()
 
-    # Update from spk_killstreak_visible_timeout
+    # Update from ipk_killstreak_visible_timeout
     global killstreak_text_visible_timeout
     killstreak_text_visible_timeout = (
         cvar_killstreak_visible_timeout.get_float())
 
-    # Update from spk_queue_timeout
+    # Update from ipk_queue_timeout
     global queue_timeout
     queue_timeout = cvar_queue_timeout.get_float()
 
-    # Update from spk_showdamage_enabled
+    # Update from ipk_showdamage_enabled
     global showdamage_enabled
     showdamage_enabled = cvar_showdamage_enabled.get_bool()
 
-    # Update from spk_killstreak_enabled
+    # Update from ipk_killstreak_enabled
     global killstreak_enabled
     killstreak_enabled = cvar_killstreak_enabled.get_bool()
-
-

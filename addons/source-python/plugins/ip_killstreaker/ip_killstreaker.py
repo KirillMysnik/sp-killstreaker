@@ -101,7 +101,7 @@ def on_round_start(game_event):
 def on_server_cvar(game_event):
     cvarname = game_event.get_string('cvarname').lower()
 
-    if cvarname == "spk_killstreak_scheme":
+    if cvarname == "ipk_killstreak_scheme":
         filename = cvar_killstreak_scheme.get_string().lower()
         try:
             reload_scheme(filename)
@@ -113,14 +113,14 @@ def on_server_cvar(game_event):
         return
 
     if cvarname in (
-        'spk_hitsound',
-        'spk_hitmarker',
-        'spk_hitmarker_visible_timeout',
-        'spk_showdamage_enabled',
-        'spk_damage_visible_timeout',
-        'spk_killstreak_enabled',
-        'spk_killstreak_visible_timeout',
-        'spk_queue_timeout',
+        'ipk_hitsound',
+        'ipk_hitmarker',
+        'ipk_hitmarker_visible_timeout',
+        'ipk_showdamage_enabled',
+        'ipk_damage_visible_timeout',
+        'ipk_killstreak_enabled',
+        'ipk_killstreak_visible_timeout',
+        'ipk_queue_timeout',
     ):
 
         echo_console("Updating local variables...")
@@ -132,9 +132,6 @@ def on_server_cvar(game_event):
 @OnClientActive
 def listener_on_client_active(index):
     player = Player(index)
-    if player.is_fake_client():
-        return
-
     user_manager.create(player)
 
 

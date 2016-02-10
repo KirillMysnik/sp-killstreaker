@@ -38,7 +38,7 @@ class KillstreakDatabase(dict):
         self.text = ""
 
     def load_from_json(self, json):
-        from ..sp_killstreaker import load_downloadables
+        from ..ip_killstreaker import load_downloadables
         self.clear()
 
         if self._downloadables is not None:
