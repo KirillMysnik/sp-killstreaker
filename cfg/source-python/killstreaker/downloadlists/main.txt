@@ -1,0 +1,3 @@
+sound/killstreaker/hitsound.mp3
+materials/overlays/killstreaker/hitmarker.vtf
+materials/overlays/killstreaker/hitmarker.vmt
